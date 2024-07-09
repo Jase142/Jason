@@ -60,12 +60,14 @@
     <div class="quiz-container" id="result">
         <p id="score"></p>
         <p id="percentage"></p>
+        <button onclick="saveScore()">Save Score</button>
         <button onclick="location.reload()">Play Again</button>
         <div id="leaderboard">
             <h2>Leaderboard</h2>
             <ol id="leaderboardList"></ol>
         </div>
     </div>
+
 
     <script>
         const questions = [
@@ -110,133 +112,161 @@
     { question: "What is a gigabyte?", answer: "unit of digital information", hint: "It is equal to 1,024 megabytes or approximately 1 billion bytes." },
     { question: "What is a terabyte?", answer: "unit of digital information", hint: "It is equal to 1,024 gigabytes or approximately 1 trillion bytes." },
     { question: "What is a petabyte?", answer: "unit of digital information", hint: "It is equal to 1,024 terabytes or approximately 1 quadrillion bytes." },
-    { question: "What is a bitmap?", answer: "raster graphics image file format", hint: "It stores digital images using a pixel grid." },
-    { question: "What is a vector graphic?", answer: "image format", hint: "It uses geometric primitives such as points, lines, curves, and shapes to represent images." },
-    { question: "What is a DNS?", answer: "domain name system", hint: "It translates domain names to IP addresses." },
-    { question: "What is OAuth?", answer: "open authorization framework", hint: "It allows third-party services to exchange your information without sharing your full credentials." },
-    { question: "What is SSL?", answer: "secure sockets layer", hint: "It ensures that data passed between the web server and browsers remain private and integral." },
-    { question: "What is a data center?", answer: "facility used to house computer systems", hint: "It stores, manages, and disseminates data and information." },
-    { question: "What is a CDN?", answer: "content delivery network", hint: "It distributes service spatially relative to end-users to provide high availability and high performance." },
-    { question: "What is a GUI?", answer: "graphical user interface", hint: "It allows users to interact with electronic devices using images rather than text commands." },
-    { question: "What is a CLI?", answer: "command-line interface", hint: "It allows users to issue commands to a program by typing commands into a text interface." },
-    { question: "What is bytecode?", answer: "intermediate code", hint: "It is the compiled code for the Java Virtual Machine." },
-    { question: "What is an API?", answer: "application programming interface", hint: "It defines interactions between multiple software applications." },
-    { question: "What is a bug in software development?", answer: "defect or error", hint: "It prevents the program from performing as expected." },
-    { question: "What is version control?", answer: "management of changes", hint: "It records changes to files over time so that you can recall specific versions later." },
-    { question: "What is a syntax error?", answer: "error in the syntax", hint: "It occurs when a program violates the rules of the programming language." },
-    { question: "What is a runtime error?", answer: "error that occurs while the program is running", hint: "It causes the program to terminate abnormally." },
-    { question: "What is a logic error?", answer: "error in the program's logic", hint: "It produces incorrect results due to faulty reasoning in the code." },
-    { question: "What is a compiler?", answer: "translator", hint: "It translates high-level programming languages into machine code." },
-    { question: "What is a debugger?", answer: "tool for locating and fixing bugs", hint: "It allows programmers to identify and resolve errors in their programs." },
-    { question: "What is object-oriented programming?", answer: "paradigm based on objects", hint: "It organizes software design around data, or objects, rather than functions and logic." },
-    { question: "What is functional programming?", answer: "paradigm based on functions", hint: "It treats computation as the evaluation of mathematical functions and avoids changing state and mutable data." },
+    { question: "What is a exabyte?", answer: "unit of digital information", hint: "It is equal to 1,024 petabytes or approximately 1 quintillion bytes." },
+    { question: "What is a zettabyte?", answer: "unit of digital information", hint: "It is equal to 1,024 exabytes or approximately 1 sextillion bytes." },
+    { question: "What is a yottabyte?", answer: "unit of digital information", hint: "It is equal to 1,024 zettabytes or approximately 1 septillion bytes." },
+    { question: "What is a bit?", answer: "smallest unit of data", hint: "It can represent only one of two states, typically represented as 0 or 1." },
+    { question: "What is a kilobit?", answer: "unit of data", hint: "It is equal to 1,024 bits." },
+    { question: "What is a megabit?", answer: "unit of data", hint: "It is equal to 1,024 kilobits or approximately 1 million bits." },
+    { question: "What is a gigabit?", answer: "unit of data", hint: "It is equal to 1,024 megabits or approximately 1 billion bits." },
+    { question: "What is a terabit?", answer: "unit of data", hint: "It is equal to 1,024 gigabits or approximately 1 trillion bits." },
+    { question: "What is a petabit?", answer: "unit of data", hint: "It is equal to 1,024 terabits or approximately 1 quadrillion bits." },
+    { question: "What is a exabit?", answer: "unit of data", hint: "It is equal to 1,024 petabits or approximately 1 quintillion bits." },
+    { question: "What is a zettabit?", answer: "unit of data", hint: "It is equal to 1,024 exabits or approximately 1 sextillion bits." },
+    { question: "What is a yottabit?", answer: "unit of data", hint: "It is equal to 1,024 zettabits or approximately 1 septillion bits." },
 ];
 
-        const numQuestions = 10; // Number of questions to be asked
-    let currentQuestion = 0;
-    let score = 0;
-    const questionKeys = questions.map(q => q.question);
-    const countdownDuration = 30;
-    let countdown;
+const numQuestions = 10; // Number of questions to ask per quiz
+        const timerSeconds = 30; // Countdown timer in seconds per question
 
-    function startQuiz() {
-        document.getElementById('start').style.display = 'none';
-        document.getElementById('quiz').style.display = 'block';
-        askQuestion();
-        startTimer();
-    }
+        let currentQuestion = 0;
+        let score = 0;
+        let countdown = timerSeconds;
+        let timerInterval;
+        let leaderboard = [];
 
-    function startTimer() {
-        let timeLeft = countdownDuration;
-        updateTimerDisplay(timeLeft);
-
-        countdown = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay(timeLeft);
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                endGame();
+        function startQuiz() {
+            const playerName = prompt("Please enter your name:");
+            if (!playerName) {
+                alert("Please enter a valid name to start the quiz.");
+                return;
             }
-        }, 1000);
-    }
 
-    function updateTimerDisplay(timeLeft) {
-        const timerDisplay = document.getElementById('countdown');
-        timerDisplay.textContent = timeLeft;
-        if (timeLeft <= 10) {
-            timerDisplay.style.color = 'red'; // Change color when time is running out
-        }
-    }
+            document.getElementById('start').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
 
-    function askQuestion() {
-        if (currentQuestion < numQuestions) {
-            const current = questions[currentQuestion];
-            document.getElementById('question').textContent = current.question;
-            document.getElementById('hint').textContent = `Hint: ${current.hint}`;
-        } else {
-            showResult();
-        }
-    }
+            // Shuffle questions array
+            shuffleArray(questions);
 
-    function checkAnswer() {
-        const userAnswer = document.getElementById('answer').value.trim().toLowerCase();
-        const correctAnswer = questions[currentQuestion].answer;
-        
-        if (userAnswer === correctAnswer) {
-            document.getElementById('question').classList.add('correct');
-            setTimeout(() => {
-                document.getElementById('question').classList.remove('correct');
-            }, 1000);
-            score++;
-        } else {
-            document.getElementById('question').classList.add('incorrect');
-            setTimeout(() => {
-                document.getElementById('question').classList.remove('incorrect');
-            }, 1000);
-        }
-
-        clearInterval(countdown); // Clear the timer after each question
-        currentQuestion++;
-        if (currentQuestion < numQuestions) {
-            document.getElementById('answer').value = '';
+            currentQuestion = 0;
+            score = 0;
+            leaderboard = []; // Reset leaderboard
             askQuestion();
-            startTimer(); // Start timer for the next question
-        } else {
-            showResult();
+            startTimer();
         }
-    }
 
-    function showResult() {
-        document.getElementById('quiz').style.display = 'none';
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('score').textContent = `You got ${score} questions correct!`;
-        const percentage = (score / numQuestions) * 100;
-        document.getElementById('percentage').textContent = `You got ${percentage.toFixed(2)}%`;
+        function askQuestion() {
+            if (currentQuestion < numQuestions) {
+                const current = questions[currentQuestion];
+                document.getElementById('question').textContent = current.question;
+                document.getElementById('hint').textContent = `Hint: ${current.hint}`;
+                resetTimer();
+            } else {
+                showResult();
+            }
+        }
 
-        // Display leaderboard (dummy data for demonstration)
-        displayLeaderboard();
-    }
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answer').value.toLowerCase();
+            const correctAnswer = questions[currentQuestion].answer.toLowerCase();
 
-    function displayLeaderboard() {
-        const leaderboardList = document.getElementById('leaderboardList');
-        const leaderboardData = [
-            { name: "Player 1", score: 40 },
-            { name: "Player 2", score: 35 },
-            { name: "Player 3", score: 30 },
-            { name: "Player 4", score: 25 },
-            { name: "Player 5", score: 20 }
-        ];
+            if (userAnswer === correctAnswer) {
+                score++;
+            }
 
-        leaderboardData.forEach(entry => {
-            const li = document.createElement('li');
-            li.textContent = `${entry.name}: ${entry.score}`;
-            leaderboardList.appendChild(li);
-        });
-    }
+            currentQuestion++;
+            askQuestion();
+        }
 
-    function endGame() {
-        clearInterval(countdown);
-        alert('Time is up! Maybe next time! Goodbye!');
-        showResult();
-    }
-</script>
+        function showResult() {
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+
+            const percentage = (score / numQuestions) * 100;
+
+            document.getElementById('score').textContent = `Your score: ${score} out of ${numQuestions}`;
+            document.getElementById('percentage').textContent = `Percentage: ${percentage.toFixed(2)}%`;
+
+            // Prompt for player name to add to leaderboard
+            const playerName = prompt("Congratulations! You made it to the leaderboard. Enter your name:");
+            if (!playerName) {
+                alert("Please enter a valid name to add your score to the leaderboard.");
+                return;
+            }
+
+            addToLeaderboard(playerName, score);
+
+            // Display leaderboard
+            displayLeaderboard();
+        }
+
+        function addToLeaderboard(name, score) {
+            leaderboard.push({ name, score });
+            // Sort leaderboard descending by score
+            leaderboard.sort((a, b) => b.score - a.score);
+        }
+
+        function displayLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = ''; // Clear previous entries
+
+            leaderboard.forEach((entry, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `#${index + 1}: ${entry.name} - ${entry.score}`;
+                leaderboardList.appendChild(listItem);
+            });
+        }
+
+        function startTimer() {
+            countdown = timerSeconds;
+            updateTimerDisplay();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            countdown--;
+            updateTimerDisplay();
+
+            if (countdown === 0) {
+                clearInterval(timerInterval);
+                currentQuestion++;
+                askQuestion();
+            }
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('countdown').textContent = countdown;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            startTimer();
+        }
+
+        // Function to shuffle an array using Fisher-Yates shuffle algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function saveScore() {
+            const playerName = prompt("Enter your name to save your score:");
+            if (!playerName) {
+                alert("Please enter a valid name to save your score.");
+                return;
+            }
+
+            addToLeaderboard(playerName, score);
+            displayLeaderboard();
+        }
+
+        function endGame() {
+            // Handle when the user decides not to start the quiz
+        }
+    </script>
+</body>
+</html>
